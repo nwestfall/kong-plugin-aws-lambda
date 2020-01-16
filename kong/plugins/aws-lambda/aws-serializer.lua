@@ -5,11 +5,7 @@
 
 local EMPTY = {}
 
-local ngx_req_get_headers  = ngx.req.get_headers
-local ngx_req_get_uri_args = ngx.req.get_uri_args
 local ngx_encode_base64    = ngx.encode_base64
-local ngx_req_read_body    = ngx.req.read_body
-local ngx_req_get_body_data= ngx.req.get_body_data
 local ngx_req_get_body_file= ngx.req.get_body_file
 local ngx_log              = ngx.log
 local ERR                  = ngx.ERR
@@ -17,10 +13,9 @@ local ERR                  = ngx.ERR
 
 return function(ctx, config)
   ctx = ctx or ngx.ctx
-  local var = ngx.var
 
   -- prepare headers
-  local headers = ngx_req_get_headers()
+  local headers = kong.request.get_headers()
   local multiValueHeaders = {}
   for hname, hvalue in pairs(headers) do
     if type(hvalue) == "table" then
@@ -43,7 +38,7 @@ return function(ctx, config)
   end
 
   -- query parameters
-  local queryStringParameters = ngx_req_get_uri_args()
+  local queryStringParameters = kong.request.get_query()
   local multiValueQueryStringParameters = {}
   for qname, qvalue in pairs(queryStringParameters) do
     if type(qvalue) == "table" then
@@ -60,8 +55,7 @@ return function(ctx, config)
   -- prepare body
   local body, isBase64Encoded
   do
-    ngx_req_read_body()
-    body = ngx_req_get_body_data()
+    body = kong.request.get_raw_body()
     if not body then
       local body_filepath = ngx_req_get_body_file()
       if body_filepath then
@@ -84,12 +78,12 @@ return function(ctx, config)
   end
 
   -- prepare path
-  local path = var.request_uri:match("^([^%?]+)")  -- strip any query args
+  local path = kong.request.get_path()
 
   local request = {
-    resource                        = ctx.router_matches.uri,
+    resource                        = kong.request.get_path(),
     path                            = path,
-    httpMethod                      = var.request_method,
+    httpMethod                      = kong.request.get_method(),
     headers                         = headers,
     multiValueHeaders               = multiValueHeaders,
     pathParameters                  = pathParameters,
