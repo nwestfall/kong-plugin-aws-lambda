@@ -9,6 +9,7 @@ local ngx_encode_base64    = ngx.encode_base64
 local ngx_req_get_body_file= ngx.req.get_body_file
 local ngx_log              = ngx.log
 local ERR                  = ngx.ERR
+local kong                 = kong
 
 
 return function(ctx, config)
